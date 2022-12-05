@@ -2,6 +2,8 @@
 <html>
   <head>
     <link type="text/css" rel="stylesheet" href="style.css">
+<link type="text/javascript" href="jquery-3.6.1.min.js">
+<link type="text/javascript" href="main.js">
     
   </head>
 <body>
@@ -9,8 +11,8 @@
 <h1>Hello World</h1>
 <p>I'm hosted with GitHub Pages.</p>
 <div class="flex-container">    
-<div class="auswahl">    
 
+<div class="auswahl">    
   <label for="cas1">Choose a solute:</label>
 <select name="cas1" id="cas1">
   <option value="test1">Test1</option>
@@ -18,8 +20,8 @@
   <option value="test3">Test3</option>
   <option value="test4">Test4</option>
 </select> 
-
 </div>
+
 <div class="auswahl">  
     <label for="cas2">Choose a solvent:</label>
 <select name="cas2" id="cas2">
@@ -27,14 +29,28 @@
   <option value="test-b-2">Test-b-2</option>
   <option value="test-b-3">Test-b-3</option>
   <option value="test-b-4">Test-b-4</option>
-</select> 
+</select>
+  </div>
 
-<input type="number"></input>
-    
-  
-  
-    </div>
+<div class="auswahl">  
+<input type="number" placeholder="temperature"></input>
+</div>
+
 </div>  
+
+<div class="flex-container"> 
+
+<div class="ergebnis"> 
+<h2>aktivity coefficient</h2>
+<div id="aktivitaetskoeffizient"></div>
+</div>
+
+<div class="ergebnis"> 
+<h2>error</h2>
+<div id="fehler"></div>
+</div>
+
+</div>
     
   </section>
 </body>
