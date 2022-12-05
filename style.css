@@ -1,2 +1,9 @@
 
-h1 {color:red}
+h1 {
+  color:red;
+}
+section { 
+  width:100%;
+  max-width:1450px;
+  margin:0 auto;
+}
