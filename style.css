@@ -12,9 +12,16 @@ section {
 .flex-container {
  display:flex;
 flex-flow:row wrap;
-justify-content: space-between;
+justify-content: flex-start;
+margin-bottom: 3rem;
 }
+
 .auswahl {
+ flex-basis:30%;
+width:30%;
+max-width:30%;
+}
+.ergebnis {
  flex-basis:30%;
 width:30%;
 max-width:30%;
@@ -27,4 +34,11 @@ width:100%;
 max-width:100%;
 margin-bottom:2rem;
 }
+.ergebnis {
+ flex-basis:100%;
+width:100%;
+max-width:100%;
+margin-bottom:2rem;
 }
+}
+
