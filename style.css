@@ -1,9 +1,30 @@
-
+html {
+font-size:18px;
+}
 h1 {
-  color:red;
+ 
 }
 section { 
   width:100%;
   max-width:1450px;
   margin:0 auto;
+}
+.flex-container {
+ display:flex;
+flex-flow:row wrap;
+justify-content: space-between;
+}
+.auswahl {
+ flex-basis:30%;
+width:30%;
+max-width:30%;
+}
+
+@media (max-width:767px) {
+.auswahl {
+ flex-basis:100%;
+width:100%;
+max-width:100%;
+margin-bottom:2rem;
+}
 }
