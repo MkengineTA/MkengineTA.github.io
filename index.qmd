@@ -1,10 +1,18 @@
 ---
 title: "Welcome to My Blog"
 ---
+
 # Welcome to My Blog
 
-This is the home page of my blog.
+Hi, I'm Tobias Averbeck. I'm a deep learning enthusiast, and this blog is my journey into the world of deep learning over the next two years. I'll be sharing my experiences, projects, and learnings with you as I dive deeper into this fascinating field.
+
+![Profile Picture](profile.jpg){width=150 height=150 style="border-radius: 50%;"}
 
 ## Recent Posts
 
-- [My First Blog Post](Day1.html)
+- [My First Blog Post](Day1.html) - March 4th, 2023 - Starting with a digit recognizer for MNIST data.
+
+<footer>
+  <p>Contact me: <a href="mailto:tobias.averbeck@tu-dortmund.de">tobias.averbeck@tu-dortmund.de</a></p>
+  <p>Follow me on <a href="https://github.com/MkengineTA">GitHub</a> and <a href="https://www.linkedin.com/in/tobias-averbeck-771390157/">LinkedIn</a></p>
+</footer>
