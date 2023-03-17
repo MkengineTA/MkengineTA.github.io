@@ -1,0 +1,20 @@
+/.quarto/
+
+# Quarto cache
+.q-cache/
+
+# Jupyter checkpoint folders
+.ipynb_checkpoints/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Other files and folders to ignore
+.DS_Store
+*.log
+*.bak
+*.swp
+*.swo

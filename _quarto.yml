@@ -1,0 +1,18 @@
+project:
+  type: website
+  output-dir: docs
+website:
+  title: "Tobias Averbeck"
+  description: "Tobias Averbeck's Blog."
+  navbar:
+    right:
+      - text: Blog
+        href: blog.qmd
+      - icon: github
+        href: https://github.com/MkengineTA
+      - icon: twitter
+        href: https://twitter.com
+format:
+  html:
+    theme: cosmo
+    css: styles.css
