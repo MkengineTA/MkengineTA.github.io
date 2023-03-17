@@ -1,0 +1,11 @@
+---
+title: "Blog"
+---
+
+# Blog
+
+This is the index page for my blog posts.
+
+## Posts
+
+- [My First Blog Post](Day1.html)

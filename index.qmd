@@ -1,0 +1,10 @@
+---
+title: "Welcome to My Blog"
+---
+# Welcome to My Blog
+
+This is the home page of my blog.
+
+## Recent Posts
+
+- [My First Blog Post](Day1.html)
