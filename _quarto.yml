@@ -7,7 +7,7 @@ website:
   navbar:
     right:
       - text: Blog
-        href: blog.qmd
+        href: blog.html
       - icon: github
         href: https://github.com/MkengineTA
       - icon: twitter
