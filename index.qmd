@@ -1,12 +1,10 @@
 ---
-title: "Welcome to My Blog"
+title: "Welcome to My Deep Learning Blog"
 ---
-
-# Welcome to My Blog
 
 Hi, I'm Tobias Averbeck. I'm a deep learning enthusiast, and this blog is my journey into the world of deep learning over the next two years. I'll be sharing my experiences, projects, and learnings with you as I dive deeper into this fascinating field.
 
-![Profile Picture](profile.jpg){width=150 height=150 style="border-radius: 50%;"}
+![ ](https://tc.bci.tu-dortmund.de/storages/tc-bci/r/Bilder/Personendetails/Averbeck/JPH_3618D.jpg){width=400 height=400}
 
 ## Recent Posts
 
