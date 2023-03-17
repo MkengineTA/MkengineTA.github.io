@@ -144,7 +144,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./blog.qmd">
+    <a class="nav-link" href="./blog.html">
  <span class="menu-text">Blog</span></a>
   </li>  
   <li class="nav-item compact">
@@ -200,11 +200,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
-<section id="day-1---the-digit-recognizer-04.03.2023" class="level1">
-<h1>Day 1 - The Digit Recognizer (04.03.2023)</h1>
+<section id="the-digit-recognizer---day-1" class="level1">
+<h1>The Digit Recognizer - Day 1</h1>
 <p>Today I start with my first projet, the Digit Recognizer, a challenge from Kaggle for beginners. On Kaggle only csv files are uploaded, but I want to learn how to use the original source material, so I download the .gz files from http://yann.lecun.com/exdb/mnist/</p>
 <p>Since the files are stored in binary format, I first need to make them usable for me, to do this I use gzip to read the contents of the .gz files and struct to unzip these files.</p>
-<div class="cell">
+<div class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gzip</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -245,12 +245,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>X_test, y_test <span class="op">=</span> load_mnist(<span class="st">"t10k-images-idx3-ubyte.gz"</span>, <span class="st">"t10k-labels-idx1-ubyte.gz"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now all that remains is to convert the data into the correct 28x28 pixel form.</p>
-<div class="cell">
+<div class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">28</span>, <span class="dv">28</span>, <span class="dv">1</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">28</span>, <span class="dv">28</span>, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>My next step is the definition of the model. I know that Convolutional Neural Networks are used for image recognition, so I will do that here too. I start with two convolutional layers and two dense layers and see if I can get it to work. According to the internet it is normal to start with a filter count of 32 in the first conv layer, so I do that here too, followed by a max pooling layer with stride (2,2), which is also standard. I use he_normal as kernel_initalizer, as it is supposed to work well with “relu”.</p>
-<div class="cell">
+<div class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tensorflow.keras <span class="im">import</span> layers, models</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>img_width <span class="op">=</span> <span class="dv">28</span></span>
@@ -286,12 +286,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> layers.MaxPooling2D((<span class="dv">2</span>, <span class="dv">2</span>), name<span class="op">=</span><span class="st">"Pool2"</span>)(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>After the Conv part comes a Flatten layer, so that the output can be used as input for the following Dense layer.</p>
-<div class="cell">
+<div class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flatten the input</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> layers.Flatten()(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The use of two dense layers in a deep learning model is common in many tasks, including image classification. The first dense layer is used to learn a high-level representation of the input data, while the second dense layer is used to make the final prediction. The ‘softmax’ activation function is commonly used in the output layer of a deep learning model for classification tasks, as it converts the outputs of the model into a probability distribution over the classes. The 10 in the Dense Layer is because I have 10 digits. The Adam optimizer is a popular choice in deep learning, so I go with that. “sparse_categorical_crossentropy” is a loss function used in multi-class classification problems where each sample has a single true label and the goal is to predict the class labels correctly. Accuracy is pretty standard as metric, so I use that here.</p>
-<div class="cell">
+<div class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First Dense Layer</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> layers.Dense(<span class="dv">64</span>, activation<span class="op">=</span><span class="st">"relu"</span>, name<span class="op">=</span><span class="st">"Dense1"</span>)(x)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -308,40 +308,88 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>              loss<span class="op">=</span><span class="st">'sparse_categorical_crossentropy'</span>,</span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>              metrics<span class="op">=</span>[<span class="st">'accuracy'</span>])</span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> model.fit(X_train, y_train, epochs<span class="op">=</span><span class="dv">10</span>, validation_data<span class="op">=</span>(X_test, y_test))</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> model.fit(X_train, y_train, epochs<span class="op">=</span><span class="dv">20</span>, validation_data<span class="op">=</span>(X_test, y_test))</span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>test_loss, test_acc <span class="op">=</span> model.evaluate(X_test, y_test)</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Test accuracy:'</span>, test_acc)</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> model.predict(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Epoch 1/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 3.6994 - accuracy: 0.1489 - val_loss: 2.2758 - val_accuracy: 0.1254
+Epoch 2/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 2.1582 - accuracy: 0.1896 - val_loss: 2.0876 - val_accuracy: 0.2049
+Epoch 3/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 2.0633 - accuracy: 0.2208 - val_loss: 1.9490 - val_accuracy: 0.2639
+Epoch 4/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 1.9540 - accuracy: 0.2611 - val_loss: 1.9101 - val_accuracy: 0.2972
+Epoch 5/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 1.7003 - accuracy: 0.3392 - val_loss: 1.6424 - val_accuracy: 0.3637
+Epoch 6/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 1.5684 - accuracy: 0.3768 - val_loss: 1.5777 - val_accuracy: 0.4073
+Epoch 7/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 1.4270 - accuracy: 0.4329 - val_loss: 1.2424 - val_accuracy: 0.5191
+Epoch 8/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 1.1102 - accuracy: 0.5646 - val_loss: 0.9063 - val_accuracy: 0.6359
+Epoch 9/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.7953 - accuracy: 0.6711 - val_loss: 0.6733 - val_accuracy: 0.7272
+Epoch 10/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.5284 - accuracy: 0.7952 - val_loss: 0.4404 - val_accuracy: 0.8430
+Epoch 11/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.3106 - accuracy: 0.9077 - val_loss: 0.2531 - val_accuracy: 0.9417
+Epoch 12/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.1827 - accuracy: 0.9551 - val_loss: 0.2147 - val_accuracy: 0.9499
+Epoch 13/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.1500 - accuracy: 0.9616 - val_loss: 0.1739 - val_accuracy: 0.9590
+Epoch 14/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.1261 - accuracy: 0.9682 - val_loss: 0.2083 - val_accuracy: 0.9528
+Epoch 15/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.1098 - accuracy: 0.9715 - val_loss: 0.2061 - val_accuracy: 0.9577
+Epoch 16/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.1007 - accuracy: 0.9732 - val_loss: 0.1936 - val_accuracy: 0.9589
+Epoch 17/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.0887 - accuracy: 0.9764 - val_loss: 0.2056 - val_accuracy: 0.9591
+Epoch 18/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.0845 - accuracy: 0.9774 - val_loss: 0.2067 - val_accuracy: 0.9593
+Epoch 19/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.0731 - accuracy: 0.9808 - val_loss: 0.2566 - val_accuracy: 0.9590
+Epoch 20/20
+1875/1875 [==============================] - 28s 15ms/step - loss: 0.0754 - accuracy: 0.9803 - val_loss: 0.2095 - val_accuracy: 0.9623
+313/313 [==============================] - 1s 4ms/step - loss: 0.2095 - accuracy: 0.9623
+Test accuracy: 0.9623000025749207
+313/313 [==============================] - 1s 3ms/step</code></pre>
+</div>
 </div>
 <p>For a first try this looks pretty good, we got an accuracy of 96.2%!</p>
 <p>At the end, I want to look at where the model failed, for that we’ll look at it with matplotlib:</p>
-<div class="cell" data-scrolled="true">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the predicted classes for each sample in X_test</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>predicted_classes <span class="op">=</span> np.argmax(predictions, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Set a threshold for the prediction uncertainty</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>uncertainty_threshold <span class="op">=</span> <span class="fl">0.9</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the indices of the samples with prediction uncertainty above the threshold</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>uncertain_indices <span class="op">=</span> np.where(np.<span class="bu">max</span>(predictions, axis<span class="op">=</span><span class="dv">1</span>) <span class="op">&lt;</span> uncertainty_threshold)[<span class="dv">0</span>]</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>num_images <span class="op">=</span> <span class="dv">70</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>wrong_indices <span class="op">=</span> [i <span class="cf">for</span> i, prediction <span class="kw">in</span> <span class="bu">enumerate</span>(predicted_classes) <span class="cf">if</span> prediction <span class="op">!=</span> y_test[i]]</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> num_images <span class="op">//</span> <span class="dv">10</span> <span class="op">+</span> (num_images <span class="op">%</span> <span class="dv">10</span> <span class="op">!=</span> <span class="dv">0</span>)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(rows, <span class="dv">10</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">15</span>), subplot_kw<span class="op">=</span>{<span class="st">'xticks'</span>: [], <span class="st">'yticks'</span>: []})</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>fig.subplots_adjust(hspace<span class="op">=</span><span class="fl">0.5</span>, wspace<span class="op">=</span><span class="fl">0.05</span>)</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>axs <span class="op">=</span> axs.ravel()</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, index <span class="kw">in</span> <span class="bu">enumerate</span>(wrong_indices[:num_images]):</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    axs[i].imshow(X_test[index].reshape(<span class="dv">28</span>, <span class="dv">28</span>), cmap<span class="op">=</span><span class="st">"gray"</span>)</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    axs[i].set_title(<span class="st">"True: </span><span class="sc">{}</span><span class="ch">\n</span><span class="st">Predicted: </span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(y_test[index], predicted_classes[index]))</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(num_images, rows <span class="op">*</span> <span class="dv">10</span>):</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    fig.delaxes(axs[i])</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-scrolled="true" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the predicted classes for each sample in X_test</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>predicted_classes <span class="op">=</span> np.argmax(predictions, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Set a threshold for the prediction uncertainty</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>uncertainty_threshold <span class="op">=</span> <span class="fl">0.9</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the indices of the samples with prediction uncertainty above the threshold</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>uncertain_indices <span class="op">=</span> np.where(np.<span class="bu">max</span>(predictions, axis<span class="op">=</span><span class="dv">1</span>) <span class="op">&lt;</span> uncertainty_threshold)[<span class="dv">0</span>]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>num_images <span class="op">=</span> <span class="dv">70</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>wrong_indices <span class="op">=</span> [i <span class="cf">for</span> i, prediction <span class="kw">in</span> <span class="bu">enumerate</span>(predicted_classes) <span class="cf">if</span> prediction <span class="op">!=</span> y_test[i]]</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> num_images <span class="op">//</span> <span class="dv">10</span> <span class="op">+</span> (num_images <span class="op">%</span> <span class="dv">10</span> <span class="op">!=</span> <span class="dv">0</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(rows, <span class="dv">10</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">15</span>), subplot_kw<span class="op">=</span>{<span class="st">'xticks'</span>: [], <span class="st">'yticks'</span>: []})</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>fig.subplots_adjust(hspace<span class="op">=</span><span class="fl">0.5</span>, wspace<span class="op">=</span><span class="fl">0.05</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>axs <span class="op">=</span> axs.ravel()</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, index <span class="kw">in</span> <span class="bu">enumerate</span>(wrong_indices[:num_images]):</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    axs[i].imshow(X_test[index].reshape(<span class="dv">28</span>, <span class="dv">28</span>), cmap<span class="op">=</span><span class="st">"gray"</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    axs[i].set_title(<span class="st">"True: </span><span class="sc">{}</span><span class="ch">\n</span><span class="st">Predicted: </span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(y_test[index], predicted_classes[index]))</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(num_images, rows <span class="op">*</span> <span class="dv">10</span>):</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    fig.delaxes(axs[i])</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="Day1_files/figure-html/cell-7-output-1.png" class="img-fluid"></p>
+</div>
 </div>
 <p>With some of them you can understand why the images were wrongly classified, but others look quite clear. Now we have to do some fine tuning, I will do that in the next blog entry.</p>
 
