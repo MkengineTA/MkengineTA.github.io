@@ -2,13 +2,14 @@
 title: "Welcome to My Deep Learning Blog"
 ---
 
-Hi, I'm Tobias Averbeck. I'm a deep learning enthusiast, and this blog is my journey into the world of deep learning over the next two years. I'll be sharing my experiences, projects, and learnings with you as I dive deeper into this fascinating field.
+Hi, I'm Tobias Averbeck. I'm a deep learning enthusiast, and this blog is my journey into the world of deep learning over the next years. I'll be sharing my experiences, projects, and learnings with you as I dive deeper into this fascinating field.
 
 ![ ](https://tc.bci.tu-dortmund.de/storages/tc-bci/r/Bilder/Personendetails/Averbeck/JPH_3618D.jpg){width=400 height=400}
 
 ## Recent Posts
 
 - [My First Blog Post](Day1.html) - March 4th, 2023 - Starting with a digit recognizer for MNIST data.
+- [The Digit Recognizer now in PyTorch!](Post2.html) - September 17th, 2023 - Now we try the same model in PyTorch.
 
 <footer>
   <p>Contact me: <a href="mailto:tobias.averbeck@tu-dortmund.de">tobias.averbeck@tu-dortmund.de</a></p>
