@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Tobias Averbeck">
+<meta name="dcterms.date" content="2023-10-27">
+
+<title>Tic-Tac-Toe with Reinforcement Learning</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="TicTacToe_files/libs/clipboard/clipboard.min.js"></script>
+<script src="TicTacToe_files/libs/quarto-html/quarto.js"></script>
+<script src="TicTacToe_files/libs/quarto-html/popper.min.js"></script>
+<script src="TicTacToe_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="TicTacToe_files/libs/quarto-html/anchor.min.js"></script>
+<link href="TicTacToe_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="TicTacToe_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="TicTacToe_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="TicTacToe_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="TicTacToe_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Tic-Tac-Toe with Reinforcement Learning</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Tobias Averbeck </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 27, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>With the last blog entry about GANs we got everything we can out of the MNIST dataset, so this time we try something completely different. I have long been fascinated by videos where an AI is trained to play through a level of a video game, for example Super Mario, so with this blog post I want to show a small example of reinforcement learning.</p>
+<p>Reinforcement Learning is a type of machine learning where an agent learns how to behave in an environment by performing certain actions and receiving rewards or penalties in return. It’s a bit like training a dog: the dog is the agent, the environment is the place where the dog can perform tricks, and the treats (or lack thereof) are the rewards or penalties. In RL, the agent makes a series of decisions (or actions), and after each decision, it gets a reward (which can be positive, negative, or zero). The goal of the agent is to learn a strategy (or policy) that will maximize its expected reward over time.</p>
+<p>I have chosen Tic Tac Toe for this, because it is a simple board game with clear rules and a finite number of states and actions. This makes it an excellent beginner example for RL. The game is deterministic, meaning there’s no luck or randomness involved in the game’s outcome, aside from the initial decision of who goes first.</p>
+<p>In the context of RL, we then have the following terms: - State: The current configuration of the Tic-Tac-Toe board. - Action: Placing a mark (either ‘X’ or ‘O’) on an empty spot on the board. - Reward: Received after making a move. For instance, a positive reward for winning, a negative reward for losing, and no reward for drawing.</p>
+<p>The difference to video games like Super Mario here, however, is that the AI learns by playing against itself instead of enemies or hazards.</p>
+<p>The approximate flow of the AI therefore looks something like this: 1. When the agent starts, it knows nothing about the game. Its actions are essentially random because its knowledge (Q-values) is initialized arbitrarily (often to zero or small random values). 2. Even in this randomness, there are moments of accidental success or failure. For instance, the agent might, by chance, make a series of moves that lead to a win. It receives a positive reward for this. Conversely, it might make a blunder that leads to a loss and gets a negative reward. Over many episodes, these random successes and failures start to inform the agent about which actions are generally more promising than others. 3. As the agent continues to play, it starts to build a rudimentary strategy based on the rewards it has received. It will start to favor actions that have previously led to positive outcomes. This strategy is far from perfect, but it’s better than random. When the agent plays using this strategy, it gets new data - new wins and losses that help refine the strategy further. When the agent plays against itself, both the “player” and “opponent” roles are guided by the same strategy, as the “player” role learns and improves, the “opponent” role does too.</p>
+<p>Let’s start by inspecting the code for the Tic Tac Toe game. First the “board” for the game is created, this happens in the initialization (<strong><strong>init</strong></strong>) <em>self.board</em>: Initializes the game board as a 3x3 matrix filled with zeros (indicating empty cells). <em>self.current_player</em>: Initializes the current player as 1. (Player 1 will be ‘X’ and Player 2 will be ‘O’)</p>
+<p><strong>available_moves</strong> has only one line but I will break it down a bit: <em>self.board == 0</em> creates a boolean matrix of the same shape as <em>self.board</em>. Each element in this matrix is <em>True</em> if the corresponding cell in <em>self.board</em> is 0 (indicating it’s empty and a move can be done here) and <em>False</em> otherwise. <em>np.where</em> applied to this boolean matrix returns two separate arrays: one for the row indices and one for the column indices where the condition (i.e., the cell being 0) is True.</p>
+<p>Suppose our board looks like this: [[1, 0, 2], [0, 1, 0], [2, 0, 0]]</p>
+<p>Applying <em>self.board == 0</em> would yield: [[False, True, False], [True, False, True], [False, True, True]]</p>
+<p>And <em>np.where(self.board == 0)</em> would return two arrays: Row indices: [0, 1, 1, 2, 2] Column indices: [1, 0, 2, 1, 2]</p>
+<p>These arrays indicate that empty spots are at positions (0,1), (1,0), (1,2), (2,1) and (2,2) on the board. <em>zip(</em>np.where(self.board == 0))<em>: The </em> operator is used to unpack the arrays returned by <em>np.where</em> as <em>zip</em> expects its arguments to be separate sequences (like lists or arrays). If you pass the tuple directly to <em>zip</em>, it would treat the entire tuple as one sequence. That’s not what we want. By using the * operator before the tuple, we’re essentially telling Python to treat the individual arrays inside the tuple as separate arguments to the function. <em>zip</em> then pairs the corresponding elements of these arrays together, effectively producing coordinates of the empty spots.</p>
+<p>Using the same example, after the <em>zip</em> function, we’d get: [(0,1), (1,0), (1,2), (2,1), (2,2)]</p>
+<p>Then <em>list(…)</em> converts the zipped object into a list.</p>
+<p>Next is <strong>make_move</strong>: The input move is a tuple (i, j) representing the position (row i, column j) where the current player wants to place their mark. <em>if self.board[move] == 0:</em> checks if the cell at position <em>move</em> on the board is empty (has a value of 0). If the chosen cell is empty, the current player’s mark is placed on the board at that position. The mark is represented by the player’s number (1 for Player 1 and 2 for Player 2). In the next if-condition <strong>check_win</strong> is used, which I will explain later in more detail. Basically the method then checks if this move resulted in a win using the <em>check_win</em> function. If the current player has won: - Player 1 (represented by 1) receives a reward of 10. - Player 2 (represented by 2) receives a reward of -10.</p>
+<p>Afterwards we also check with <em>if len(self.available_moves()) == 0</em> for a draw, as that is a possible outcome in Tic-Tac-Toe As well. If nobody has won yet and there are no available moves left, it means the game has ended in a draw. In this case, a reward of 0 is returned. Next we switch the current player to the other player. As we only have two players and the players have the numbers 1 and 2 assigned, we can simply use <em>self.current_player = 3 - self.current_player</em> to switch the players. Then, a reward of 0 is returned, indicating the game continues without any decisive outcome from the current move. Lastly the agent has to learn, that there are also invalid moves: If the initial check found that the chosen cell is not empty (i.e., it already has a mark), then the move is invalid. In this case: - Player 1 (represented by 1) receives a penalty of -10. - Player 2 (represented by 2) receives a penalty of 10.</p>
+<p>As already mentioned before, we need <strong>check_win</strong> to determine if the current player has won. The method starts by iterating through each row and column index ii from 0 to 2. <em>np.all(self.board[i, :] == self.current_player)</em> checks if all elements in the <em>i</em>th row are equal to the current player’s mark. This would mean that the current player has all their marks in a horizontal line on the board. <em>np.all(self.board[:, i] == self.current_player)</em> checks if all elements in the <em>i</em>th column are equal to the current player’s mark, indicating a vertical line of the current player’s marks. If either of these conditions is true for any row or column, the method immediately returns True, indicating a win for the current player. The following two <em>if</em> statements check for a win along the two possible diagonals of the 3x3 board. The first <em>if</em> statement checks the main diagonal, from the top-left to the bottom-right. If all cells in this diagonal have the current player’s mark, it’s a win. The second <em>if</em> statement checks the other diagonal, from the top-right to the bottom-left. Again, if all cells in this diagonal contain the current player’s mark, it’s a win. If either diagonal condition is met, the method returns <em>True</em>. If none of the above checks for rows, columns, or diagonals find a winning configuration, the method concludes there’s no win for the current player and returns <em>False</em>. The last function <strong>reset</strong> is used to reset the board for the next training loop.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TicTacToe:</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.board <span class="op">=</span> np.zeros((<span class="dv">3</span>, <span class="dv">3</span>), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.current_player <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> available_moves(<span class="va">self</span>):</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">list</span>(<span class="bu">zip</span>(<span class="op">*</span>np.where(<span class="va">self</span>.board <span class="op">==</span> <span class="dv">0</span>)))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> make_move(<span class="va">self</span>, move):</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.board[move] <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.board[move] <span class="op">=</span> <span class="va">self</span>.current_player</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">self</span>.check_win():</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="dv">10</span> <span class="cf">if</span> <span class="va">self</span>.current_player <span class="op">==</span> <span class="dv">1</span> <span class="cf">else</span> <span class="op">-</span><span class="dv">10</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.available_moves()) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.current_player <span class="op">=</span> <span class="dv">3</span> <span class="op">-</span> <span class="va">self</span>.current_player</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="op">-</span><span class="dv">10</span> <span class="cf">if</span> <span class="va">self</span>.current_player <span class="op">==</span> <span class="dv">1</span> <span class="cf">else</span> <span class="dv">10</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> check_win(<span class="va">self</span>):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> np.<span class="bu">all</span>(<span class="va">self</span>.board[i, :] <span class="op">==</span> <span class="va">self</span>.current_player) <span class="kw">or</span> np.<span class="bu">all</span>(<span class="va">self</span>.board[:, i] <span class="op">==</span> <span class="va">self</span>.current_player):</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.board[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">==</span> <span class="va">self</span>.current_player <span class="kw">and</span> <span class="va">self</span>.board[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">==</span> <span class="va">self</span>.current_player <span class="kw">and</span> <span class="va">self</span>.board[</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="dv">2</span>, <span class="dv">2</span>] <span class="op">==</span> <span class="va">self</span>.current_player:</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.board[<span class="dv">0</span>, <span class="dv">2</span>] <span class="op">==</span> <span class="va">self</span>.current_player <span class="kw">and</span> <span class="va">self</span>.board[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">==</span> <span class="va">self</span>.current_player <span class="kw">and</span> <span class="va">self</span>.board[</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            <span class="dv">2</span>, <span class="dv">0</span>] <span class="op">==</span> <span class="va">self</span>.current_player:</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> reset(<span class="va">self</span>):</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.board <span class="op">=</span> np.zeros((<span class="dv">3</span>, <span class="dv">3</span>), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.current_player <span class="op">=</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The next part is the Q-Network, which is a model-free algorithm, basically a trial-and-error method. “Q” refers to the function that the algorithm computes – the expected rewards for an action taken in a given state. I did not find a deeper meaning to the letter “Q”, it probably was just standardized for the mathematical notation of the network. The <em>QNetwork</em> class is a simple neural network architecture implemented using PyTorch’s <em>nn.Module</em>. It consists of three fully connected (or linear) layers. For a simple problem like Tic-Tac-Toe, a straightforward neural network architecture with linear layers might suffice. More complex problems (like playing Super Mario) might require convolutional layers or recurrent layers. The choice of 128 neurons for the hidden layers is somewhat arbitrary, but should be sufficient for Tic-Tac-Toe and well and ReLu is always a good choice for the activation functions in a feedforward neural network. In <em><strong>init</strong></em>, we initialize the layers and its sizes. *super(QNetwork, self).__init__()* calls the initialization method of the parent class (<em>nn.Module</em>), ensuring the network is set up correctly. As someone coming from MATLAB <em>super</em> and <em><strong>init</strong></em> are not exactly intuitive, so here is a little excursion if anyone else has it’s problems with it: In Python, super() is used to call a method from a parent class. Here the <em>QNetwork</em> class is inheriting from <em>nn.Module</em>, which is a base class provided by PyTorch for all neural network modules. This base class comes with many built-in functionalities that are useful for neural networks. When we create an instance of the <em>QNetwork</em> class, we want to make sure that the initialization process of the parent class (<em>nn.Module</em>) is also executed. The *super(QNetwork, self).__init__()* line is calling the <em><strong>init</strong></em> method of the <em>nn.Module</em> class, ensuring that the initialization of the parent class is done. Back to our code: we have three fully connected layers, transforming from the 9 initial possible actions, to 128 and in the last layer back to 9, as we need 9 Q-values. When deciding on an action, the agent will typically choose the action corresponding to the highest Q-value. The <em>forward</em> method defines the structure of the network, where the layers are simply connected by ReLu functions and it returns the raw Q-values in the last layer. Why do we want raw Q-values? Raw Q-values are the neural network’s estimates of the expected future rewards for each action. Having raw, unbounded Q-values makes it straightforward to calculate the loss and to find the maximum value and its corresponding action.</p>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> QNetwork(nn.Module):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>(QNetwork, <span class="va">self</span>).<span class="fu">__init__</span>()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.fc1 <span class="op">=</span> nn.Linear(<span class="dv">9</span>, <span class="dv">128</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.fc2 <span class="op">=</span> nn.Linear(<span class="dv">128</span>, <span class="dv">128</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.fc3 <span class="op">=</span> nn.Linear(<span class="dv">128</span>, <span class="dv">9</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> nn.functional.relu(<span class="va">self</span>.fc1(x))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> nn.functional.relu(<span class="va">self</span>.fc2(x))</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.fc3(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>train_q_network</strong> contains the training loop for our agent. For the exploration we use a classic RL method, the epsilon-greedy method (see multi-armed bandit on Wikipedia). This method balances exploration and exploitation. Exploration means, the agent tries different actions to discover their effects, hoping to find optimal actions and exploitation means, the agent chooses the action that it currently believes to have the highest expected reward. So, in this strategy: - With probability ϵ, the agent chooses an action uniformly at random (exploration). - With probability 1−ϵ, the agent chooses the best action according to its current knowledge (exploitation).</p>
+<p>We also have the ϵ-decay, because over time, as the agent learns more about the environment, it makes sense to reduce the amount of random exploration and rely more on the learned strategy (policy). While decreasing ϵ we don’t want it to go to zero. Having a small amount of exploration can be beneficial even in the later stages of training. We let it loop for 3000 episodes, each episode corresponds to playing one game of Tic-Tac-Toe. With the start of each episode, the board is reset, the current state of the board is flattened into a 1D array (so that it can be used for the neural network) and <em>episode_reward</em> is initialized to 0. The agent uses an epsilon-greedy strategy to select actions: - With probability ϵ, choose a random action (using <em>random.choice</em>). - Otherwise, use the QNetwork to estimate the Q-values for the current state and choose the action with the highest Q-value.</p>
+<p>A bit more detail on the last part: If the agent doesn’t decide to explore (i.e., the random number is greater than or equal to ϵ), it will exploit its current knowledge. First the current state of the game is passed through the QNetwork to obtain the estimated Q-values for each possible action and the available moves on the current board are fetched. The line <em>available_action_indices = …</em> converts the 2D action coordinates from the 3x3 Tic-Tac-Toe board into a corresponding index in the flattened 1D state representation. For example, if an action is to place a mark in the second row and third column (action = (1, 2)), its index in the flattened state is 5. The following <em>action = …</em> line selects the action with the highest Q-value from among the available actions. <em>torch.argmax()</em> returns the index of the maximum value in the <em>action_values</em> tensor for the available actions, and <em>.item()</em> converts the tensor value to a Python scalar. Finally, this index is used to fetch the corresponding action from the <em>available_actions</em> list.</p>
+<p>Afterwards the agent takes action: The chosen action is executed in the game, and the resulting reward is recorded. If the game has ended (e.g., someone won or it’s a draw), the game loop is exited. Otherwise, the state is updated for the next iteration and after each episode, ϵ is decayed to reduce the probability of random actions over time. Then the results of each episode (win, draw, or loss) are tracked for later visualization. Every 100 episodes, the rates of wins, draws, and losses are appended and then reset.</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_q_network(game, network, num_episodes<span class="op">=</span><span class="dv">3000</span>):</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    epsilon <span class="op">=</span> <span class="fl">0.9</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    epsilon_decay <span class="op">=</span> <span class="fl">0.995</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    min_epsilon <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    rewards <span class="op">=</span> []</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    win_rates <span class="op">=</span> []</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    draw_rates <span class="op">=</span> []</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    loss_rates <span class="op">=</span> []</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    wins <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    draws <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> episode <span class="kw">in</span> <span class="bu">range</span>(num_episodes):</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        game.reset()</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        state <span class="op">=</span> game.board.flatten()</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        episode_reward <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> random.random() <span class="op">&lt;</span> epsilon <span class="kw">and</span> game.available_moves():</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>                action <span class="op">=</span> random.choice(game.available_moves())</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                action_values <span class="op">=</span> network(torch.tensor(state, dtype<span class="op">=</span>torch.float32))</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>                available_actions <span class="op">=</span> game.available_moves()</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> available_actions:</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>                available_action_indices <span class="op">=</span> [<span class="dv">3</span><span class="op">*</span>action[<span class="dv">0</span>] <span class="op">+</span> action[<span class="dv">1</span>] <span class="cf">for</span> action <span class="kw">in</span> available_actions]</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>                action <span class="op">=</span> available_actions[torch.argmax(action_values[available_action_indices]).item()]</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>            reward <span class="op">=</span> game.make_move(action)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>            episode_reward <span class="op">+=</span> reward</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> reward <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>            state <span class="op">=</span> game.board.flatten()</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>        epsilon <span class="op">=</span> <span class="bu">max</span>(min_epsilon, epsilon <span class="op">*</span> epsilon_decay)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>        rewards.append(episode_reward)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> episode_reward <span class="op">==</span> <span class="dv">10</span>:</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>            wins <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> episode_reward <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>            draws <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>            losses <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (episode <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">100</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>            win_rates.append(wins <span class="op">/</span> <span class="dv">100</span>)</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>            draw_rates.append(draws <span class="op">/</span> <span class="dv">100</span>)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>            loss_rates.append(losses <span class="op">/</span> <span class="dv">100</span>)</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>            wins, draws, losses <span class="op">=</span> <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rewards, win_rates, draw_rates, loss_rates</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This was the training part, the remaining code is for the visualization of the training process and the results. The first loop draws the two vertical and two horizontal lines that make up the Tic-Tac-Toe grid. The nested loop goes through each cell of the Tic-Tac-Toe board; if a cell contains a 1, it draws an ‘X’ using two straight lines, if a cell contains a 2, it draws an ‘O’ using the <em>plt.Circle()</em> function. If the <em>winning_line</em> argument is provided, the last block draws a red line (‘r-’) to highlight the winning row, column, or diagonal.</p>
+<div class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> draw_board(board, winning_line<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    plt.gca().clear()</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Drawing the board</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">3</span>):</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        plt.plot([i, i], [<span class="dv">0</span>, <span class="dv">3</span>], <span class="st">'k-'</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        plt.plot([<span class="dv">0</span>, <span class="dv">3</span>], [i, i], <span class="st">'k-'</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> board[i, j] <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                plt.plot([j, j <span class="op">+</span> <span class="dv">1</span>], [<span class="dv">3</span> <span class="op">-</span> i, <span class="dv">2</span> <span class="op">-</span> i], <span class="st">'k-'</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                plt.plot([j <span class="op">+</span> <span class="dv">1</span>, j], [<span class="dv">3</span> <span class="op">-</span> i, <span class="dv">2</span> <span class="op">-</span> i], <span class="st">'k-'</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> board[i, j] <span class="op">==</span> <span class="dv">2</span>:</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                circle <span class="op">=</span> plt.Circle((j <span class="op">+</span> <span class="fl">0.5</span>, <span class="fl">2.5</span> <span class="op">-</span> i), <span class="fl">0.4</span>, color<span class="op">=</span><span class="st">'k'</span>, fill<span class="op">=</span><span class="va">False</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                plt.gca().add_patch(circle)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> winning_line:</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        plt.plot(winning_line[<span class="dv">0</span>], winning_line[<span class="dv">1</span>], <span class="st">'r-'</span>, lw<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    plt.gca().set_aspect(<span class="st">'equal'</span>, adjustable<span class="op">=</span><span class="st">'box'</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    plt.xticks([])</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    plt.yticks([])</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    plt.xlim(<span class="dv">0</span>, <span class="dv">3</span>)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    plt.ylim(<span class="dv">0</span>, <span class="dv">3</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    plt.show(block<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    plt.pause(<span class="fl">0.5</span>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    plt.clf()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <em>visualize_game</em> function is designed to visually simulate a game of Tic-Tac-Toe where one player (Player 1) is controlled by the trained neural network (the QNetwork) and the other player (Player 2) selects its moves randomly. This function provides a way to observe the behavior of the trained agent in a game setting.</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> visualize_game(game, network):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    game.reset()</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    draw_board(game.board)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        available_moves <span class="op">=</span> game.available_moves()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(available_moves) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">"It's a draw!"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> game.current_player <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>            action_values <span class="op">=</span> network(torch.tensor(game.board.flatten(), dtype<span class="op">=</span>torch.float32))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>            available_action_indices <span class="op">=</span> [<span class="dv">3</span> <span class="op">*</span> action[<span class="dv">0</span>] <span class="op">+</span> action[<span class="dv">1</span>] <span class="cf">for</span> action <span class="kw">in</span> available_moves]</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            action <span class="op">=</span> available_moves[torch.argmax(action_values[available_action_indices]).item()]</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            game.make_move(action)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> game.check_win():</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                draw_board(game.board, get_winning_line(game.board))</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                <span class="bu">print</span>(<span class="st">"Player 1 (X) wins!"</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                draw_board(game.board)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>            action <span class="op">=</span> random.choice(available_moves)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>            game.make_move(action)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> game.check_win():</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>                draw_board(game.board, get_winning_line(game.board))</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                <span class="bu">print</span>(<span class="st">"Player 2 (O) wins!"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>                draw_board(game.board)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The next function <em>get_winning_line</em> is used to determine the winning line, if there is one. The function loops through all the rows of the board. For each row <em>i</em>, it checks if all elements in that row are 1 (X’s) or 2 (O’s). If either condition is true, it means that there’s a horizontal winning line. The function then returns the starting and ending coordinates for this horizontal line. The 2.5 - i logic converts the row index i to the y-coordinate for drawing the line. The 0.5 and 2.5 values are used to get the center coordinates of the columns and rows, respectively. In the end it also checks for diagonal winning lines.</p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_winning_line(board):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.<span class="bu">all</span>(board[i, :] <span class="op">==</span> <span class="dv">1</span>) <span class="kw">or</span> np.<span class="bu">all</span>(board[i, :] <span class="op">==</span> <span class="dv">2</span>):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> [[<span class="dv">0</span>, <span class="dv">3</span>], [<span class="fl">2.5</span> <span class="op">-</span> i, <span class="fl">2.5</span> <span class="op">-</span> i]]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.<span class="bu">all</span>(board[:, i] <span class="op">==</span> <span class="dv">1</span>) <span class="kw">or</span> np.<span class="bu">all</span>(board[:, i] <span class="op">==</span> <span class="dv">2</span>):</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> [[<span class="fl">0.5</span> <span class="op">+</span> i, <span class="fl">0.5</span> <span class="op">+</span> i], [<span class="dv">0</span>, <span class="dv">3</span>]]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> board[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">==</span> board[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">==</span> board[<span class="dv">2</span>, <span class="dv">2</span>] <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> [[<span class="dv">0</span>, <span class="dv">3</span>], [<span class="dv">3</span>, <span class="dv">0</span>]]</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> board[<span class="dv">0</span>, <span class="dv">2</span>] <span class="op">==</span> board[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">==</span> board[<span class="dv">2</span>, <span class="dv">0</span>] <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> [[<span class="dv">3</span>, <span class="dv">0</span>], [<span class="dv">3</span>, <span class="dv">0</span>]]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">None</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The following function visualizes various metrics: the rewards obtained over episodes and the win, draw, and loss rates computed every 100 episodes. I also wanted smoothed lines in both plots, so we use a gaussian filter for that, where the sigma parameter controls the degree of smoothing. This smoothed curve helps in visualizing the general trend in rewards over episodes and the win, loss and draw rates.</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.ndimage <span class="im">import</span> gaussian_filter1d</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_metrics(rewards, win_rates, draw_rates, loss_rates):</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    plt.subplot(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    plt.scatter(<span class="bu">range</span>(<span class="bu">len</span>(rewards)), rewards, label<span class="op">=</span><span class="st">'Reward per Episode'</span>, marker<span class="op">=</span><span class="st">'o'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    plt.plot(gaussian_filter1d(rewards, sigma<span class="op">=</span><span class="dv">20</span>), color<span class="op">=</span><span class="st">'blue'</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    plt.title(<span class="st">'Rewards over Episodes'</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    plt.xlabel(<span class="st">'Episode'</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    plt.ylabel(<span class="st">'Reward'</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    episodes <span class="op">=</span> [i <span class="op">*</span> <span class="dv">100</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(win_rates))]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    plt.subplot(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    plt.scatter(episodes, win_rates, label<span class="op">=</span><span class="st">'Win Rate'</span>, marker<span class="op">=</span><span class="st">'o'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, color<span class="op">=</span><span class="st">'blue'</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    plt.scatter(episodes, draw_rates, label<span class="op">=</span><span class="st">'Draw Rate'</span>, marker<span class="op">=</span><span class="st">'o'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, color<span class="op">=</span><span class="st">'orange'</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    plt.scatter(episodes, loss_rates, label<span class="op">=</span><span class="st">'Loss Rate'</span>, marker<span class="op">=</span><span class="st">'o'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, color<span class="op">=</span><span class="st">'green'</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    plt.plot(episodes, gaussian_filter1d(win_rates, sigma<span class="op">=</span><span class="dv">2</span>), color<span class="op">=</span><span class="st">'blue'</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    plt.plot(episodes, gaussian_filter1d(draw_rates, sigma<span class="op">=</span><span class="dv">2</span>), color<span class="op">=</span><span class="st">'orange'</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    plt.plot(episodes, gaussian_filter1d(loss_rates, sigma<span class="op">=</span><span class="dv">2</span>), color<span class="op">=</span><span class="st">'green'</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    plt.title(<span class="st">'Win, Draw, and Loss Rates'</span>)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    plt.xlabel(<span class="st">'Every 100 Episodes'</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    plt.ylabel(<span class="st">'Rate'</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    plt.legend()</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we just have to initialize the game and the network and start the training.</p>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>game <span class="op">=</span> TicTacToe()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>network <span class="op">=</span> QNetwork()</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>rewards, win_rates, draw_rates, loss_rates <span class="op">=</span> train_q_network(game, network)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>plot_metrics(rewards, win_rates, draw_rates, loss_rates)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>plt.figure()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>visualize_game(game, network)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-1.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-2.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-3.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-4.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-5.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-6.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-7.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-8.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-9.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="TicTacToe_files/figure-html/cell-9-output-10.png" class="img-fluid"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Player 2 (O) wins!</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;Figure size 640x480 with 0 Axes&gt;</code></pre>
+</div>
+</div>
+<p>Now we can see the following plots: the win, loss and draw rates, the rewards over episodes rewards with (both the with smoothed averages) and an example game. We can see that the win rate starts somewhere between 0.4 and 0.6 and converges to above 0.8, a nice result for this simple network! The rewards over episodes shows that the agent is initially exploring the environment and doesn’t yet know how to act optimally. As a result, the reward averages to about 2.5. Latere it converges to around 7.5, which means that the agent is winning most of its games, occasionally drawing, and rarely losing (as seen in the example game). I think to get closer to 100% win rate, the network would need to be more complex, but this is still a nice result, considering the size of the network.</p>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
